@@ -1,0 +1,1 @@
+cmd_/workspaces/LabSisop-BuildRoot/modules/hello/khello.ko := ld -r -m elf_i386 -T ./scripts/module-common.lds --build-id  -o /workspaces/LabSisop-BuildRoot/modules/hello/khello.ko /workspaces/LabSisop-BuildRoot/modules/hello/khello.o /workspaces/LabSisop-BuildRoot/modules/hello/khello.mod.o ;  true

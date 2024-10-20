@@ -1,0 +1,1 @@
+cmd_/workspaces/LabSisop-BuildRoot/modules/simple_driver/simple_driver.ko := ld -r -m elf_i386 -T ./scripts/module-common.lds --build-id  -o /workspaces/LabSisop-BuildRoot/modules/simple_driver/simple_driver.ko /workspaces/LabSisop-BuildRoot/modules/simple_driver/simple_driver.o /workspaces/LabSisop-BuildRoot/modules/simple_driver/simple_driver.mod.o ;  true
