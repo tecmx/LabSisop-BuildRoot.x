@@ -43,7 +43,7 @@ void create_threads(int num_threads, int policy) {
 
     // Configure escalation policy 
     struct sched_param param;
-    param.sched_priority = 0;
+    param.sched_priority = (policy == SCHED_FIFO || policy == SCHED_RR) ? 1 : 0;
     if (sched_setscheduler(0, policy, &param) != 0) {
         perror("Error defining the escalation policy");
         exit(1);
@@ -66,6 +66,13 @@ void create_threads(int num_threads, int policy) {
 
 // Function for post processing the buffer and count executions 
 void post_process_buffer() {
+    
+    if(buffer_size==0)
+    {
+        printf("buffer is empty\n");
+        return;
+    }
+
     printf("Final buffer:\n%s\n", buffer);
     
     char last_char = buffer[0];
@@ -96,21 +103,35 @@ int main(int argc, char* argv[]) {
     int policy;
 
     // Choosing escalation policy 
-    if (strcmp(argv[3], "SCHED_LOW_IDLE") == 0) {
-        policy = SCHED_IDLE; // SCHED_LOW_IDLE if applicable 
-    } else if (strcmp(argv[3], "SCHED_IDLE") == 0) {
+    if (strcmp(argv[3], "SCHED_LOW_IDLE") == 0) 
+    {
+        policy = SCHED_LOW_IDLE; 
+    }
+    else if (strcmp(argv[3], "SCHED_IDLE") == 0)
+    {
         policy = SCHED_IDLE;
-    } else if (strcmp(argv[3], "SCHED_FIFO") == 0) {
+    }
+    else if (strcmp(argv[3], "SCHED_FIFO") == 0)
+    {
         policy = SCHED_FIFO;
-    } else if (strcmp(argv[3], "SCHED_RR") == 0) {
+    } 
+    else if (strcmp(argv[3], "SCHED_RR") == 0)
+    {
         policy = SCHED_RR;
-    } else {
+    }
+    else
+    {
         fprintf(stderr, "Invalid escalation policy \n");
         exit(1);
     }
 
     // buffer + semaphore 
     buffer = (char*)malloc(buffer_size * sizeof(char));
+    if (buffer == NULL) 
+    {
+        perror("Erro ao alocar memória para o buffer");
+        exit(1);
+    }
     memset(buffer, 0, buffer_size);
     sem_init(&semaphore, 0, 1);
 
