@@ -6,6 +6,14 @@
 #include <unistd.h>
 #include <string.h>
 
+#ifndef SCHED_IDLE
+#define SCHED_IDLE 5
+#endif
+
+#ifndef SCHED_LOW_IDLE
+#define SCHED_LOW_IDLE 7
+#endif
+
 // Global variables
 char *buffer;
 int buffer_size;
