@@ -33,6 +33,9 @@ void* thread_function(void* arg) {
             sem_post(&semaphore);
             break;
         }
+        
+        // Log the thread activity
+        printf("Thread %c is writing to the buffer at position %d\n", character, buffer_index);
 
         // Write char in the buffer and increase pointer 
         buffer[buffer_index++] = character;
@@ -56,6 +59,7 @@ void create_threads(int num_threads, int policy) {
         perror("Error defining the escalation policy");
         exit(1);
     }
+    printf("Current scheduling policy: %d\n", sched_getscheduler(0));
 
     // Creating threads 
     for (int i = 0; i < num_threads; i++) {
