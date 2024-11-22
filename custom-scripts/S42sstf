@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# Configuring host communication.
+#
+
+case "$1" in
+  start)
+	printf "Configuring SSTF SCHEDULER IOSCHED"
+	 	modprobe sstf-iosched 
+ 		echo sstf > /sys/block/sdb/queue/scheduler
+ 		cat /sys/block/sdb/queue/scheduler
+	;;
+  stop)
+	
+	;;
+  restart|reload)
+	"$0" stop
+	"$0" start
+	;;
+  *)
+	echo "Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?

@@ -1,0 +1,128 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+#include <sched.h>
+#include <unistd.h>
+#include <string.h>
+
+// Global variables
+char *buffer;
+int buffer_size;
+int buffer_index = 0;
+sem_t semaphore;
+
+// The function that each thread is gonna use 
+void* thread_function(void* arg) {
+    char character = *(char*)arg;
+
+    while (1) {
+        // Access the buffer using semaphore to sync
+        sem_wait(&semaphore);
+
+        // Verify if there still is space in the buffer 
+        if (buffer_index >= buffer_size) {
+            sem_post(&semaphore);
+            break;
+        }
+
+        // Write char in the buffer and increase pointer 
+        buffer[buffer_index++] = character;
+
+        sem_post(&semaphore);
+        sched_yield(); // Give CPU time to other thread 
+    }
+
+    return NULL;
+}
+
+// Function to start threads 
+void create_threads(int num_threads, int policy) {
+    pthread_t threads[num_threads];
+    char thread_chars[num_threads];
+
+    // Configure escalation policy 
+    struct sched_param param;
+    param.sched_priority = 0;
+    if (sched_setscheduler(0, policy, &param) != 0) {
+        perror("Error defining the escalation policy");
+        exit(1);
+    }
+
+    // Creating threads 
+    for (int i = 0; i < num_threads; i++) {
+        thread_chars[i] = 'A' + i;
+        if (pthread_create(&threads[i], NULL, thread_function, &thread_chars[i]) != 0) {
+            perror("Error when creating thread");
+            exit(1);
+        }
+    }
+
+    // Wait the conclusion of all threads 
+    for (int i = 0; i < num_threads; i++) {
+        pthread_join(threads[i], NULL);
+    }
+}
+
+// Function for post processing the buffer and count executions 
+void post_process_buffer() {
+    printf("Final buffer:\n%s\n", buffer);
+    
+    char last_char = buffer[0];
+    int count = 0;
+
+    printf("Post-Processing:\n");
+    for (int i = 0; i < buffer_size; i++) {
+        if (buffer[i] != last_char) {
+            printf("%c = %d\n", last_char, count);
+            last_char = buffer[i];
+            count = 1;
+        } else {
+            count++;
+        }
+    }
+    printf("%c = %d\n", last_char, count);
+}
+
+int main(int argc, char* argv[]) {
+    if (argc != 4) {
+        fprintf(stderr, "Use: %s <buffer_size> <num_threads> <policy>\n", argv[0]);
+        exit(1);
+    }
+
+    // Read arguments 
+    buffer_size = atoi(argv[1]);
+    int num_threads = atoi(argv[2]);
+    int policy;
+
+    // Choosing escalation policy 
+    if (strcmp(argv[3], "SCHED_LOW_IDLE") == 0) {
+        policy = SCHED_IDLE; // SCHED_LOW_IDLE if applicable 
+    } else if (strcmp(argv[3], "SCHED_IDLE") == 0) {
+        policy = SCHED_IDLE;
+    } else if (strcmp(argv[3], "SCHED_FIFO") == 0) {
+        policy = SCHED_FIFO;
+    } else if (strcmp(argv[3], "SCHED_RR") == 0) {
+        policy = SCHED_RR;
+    } else {
+        fprintf(stderr, "Invalid escalation policy \n");
+        exit(1);
+    }
+
+    // buffer + semaphore 
+    buffer = (char*)malloc(buffer_size * sizeof(char));
+    memset(buffer, 0, buffer_size);
+    sem_init(&semaphore, 0, 1);
+
+    // creating threads
+    create_threads(num_threads, policy);
+
+    // Buffer post processing 
+    post_process_buffer();
+
+    //Free space
+    free(buffer);
+    sem_destroy(&semaphore);
+
+    return 0;
+}
